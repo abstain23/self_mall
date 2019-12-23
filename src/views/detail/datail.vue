@@ -1,9 +1,9 @@
 <template>
   <div id="detail">
       
-      <detail-nav-bar class="detail-nav" :offsetTops='offsetTopArr'></detail-nav-bar>
+      <detail-nav-bar class="detail-nav" :offsetTops='offsetTopArr' ref="detailNav" v-show="detailUndefinde"></detail-nav-bar>
       
-      <scroll class="detail-scroll" ref="scroll" v-if="detailUndefinde">
+      <scroll class="detail-scroll" ref="scroll" v-show="detailUndefinde" :probe-type='3' @scroll='detailScroll'>
       <detail-swiper :topImages='topImages'></detail-swiper>
       <detail-base-info :goods='goods'></detail-base-info>
       <detail-shop-info :shop='shop'></detail-shop-info>
@@ -12,13 +12,14 @@
       <detail-comment :comment-info="comments" ref="comments"></detail-comment>
       <goods :goods='recommends' ref="recommends"></goods>
       </scroll>
-      <div v-else class="else">
+      <div v-show='!detailUndefinde' class="else">
         <p class="else_text">抱歉！_--_ 该商品已经下架!</p>
         <button class="btn_back" @click="showElse" :class="{touch_color:touchColor}" @touchstart="touchstart" @touchend="touchend">
           返回上一级
         </button>
       </div>
-
+     <back-top @click.native="backTop" v-show="showBackTop"></back-top>
+     <detail-bottom-nav></detail-bottom-nav>
   </div>
 </template>
 
@@ -30,12 +31,14 @@ import detailShopInfo from './childCom/detailShopInfo'
 import detailGoodsInfo from './childCom/detailGoodsInfo'
 import detailParamInfo from './childCom/detailParamInfo'
 import detailComment from './childCom/detailComment'
+import detailBottomNav from './childCom/detailBottomNav'
 
 import Scroll from 'components/common/scroll/scroll'
 import goods from 'components/content/goods/goods'
+import BackTop from 'components/content/backTop/BackTop'
 
 import { getDetail, Goods, Shop, getRecommends } from "server/detail";
-import {itemImageListennerMixin} from 'common/mixin';
+import {itemImageListennerMixin, backTopMixin} from 'common/mixin';
 
 
   export default {
@@ -49,9 +52,11 @@ import {itemImageListennerMixin} from 'common/mixin';
       detailGoodsInfo,
       detailParamInfo,
       detailComment,
-      goods
+      goods,
+      BackTop,
+      detailBottomNav
     },
-    mixins:[itemImageListennerMixin],
+    mixins:[itemImageListennerMixin, backTopMixin],
     data() {
       return {
         iid: null,
@@ -70,7 +75,6 @@ import {itemImageListennerMixin} from 'common/mixin';
     created() {
       this.iid = this.$route.params.iid
       this.getDetail(this.iid)
-
       getRecommends().then(res => {
         // console.log(res)
         this.recommends = res.data.list
@@ -79,27 +83,42 @@ import {itemImageListennerMixin} from 'common/mixin';
     mounted(){
       this.bus.$on('loadDetail',(data) => {
         this.detailUndefinde = false
-        console.log(data)
+        // console.log(data)
       })
-      
     },
     destroyed() {
       this.bus.$off('imgload', this.itemImageListener)
     },
     methods:{
-        touchstart(){
+      detailScroll(position){
+        this.showBackTop=(-position.y)>1000
+        let y = position.y
+        let len = this.offsetTopArr.length
+        let currentIndex = 0
+        for(let i =0;i<len-1;i++){
+          // console.log('xx')
+          // console.log(y)
+          if(currentIndex!=i &&(-y >= this.offsetTopArr[i] && -y < this.offsetTopArr[i+1])){
+            // console.log('yy')
+            currentIndex = i
+            // console.log(this.$refs.detailNav.currentIndex)
+          }
+        }
+        this.$refs.detailNav.currentIndex = currentIndex
+      },
+      touchstart(){
      
             this.touchColor = true;
         },
-    touchend(){
+      touchend(){
             this.touchColor = false;
         },
       detailImageLoad(){
         // console.log('x')
         this.$refs.scroll.refresh()
         // console.log(this.$refs.scroll.getScrollY())
-        this.offsetTopArr = [0,this.$refs.paramInfo.$el.offsetTop,this.$refs.comments.$el.offsetTop,this.$refs.recommends.$el.offsetTop]
-        console.log(this.offsetTopArr)
+        this.offsetTopArr = [0,this.$refs.paramInfo.$el.offsetTop,this.$refs.comments.$el.offsetTop,this.$refs.recommends.$el.offsetTop,Number.MAX_VALUE]
+        // console.log(this.offsetTopArr)
       },
       getDetail(iid){
         getDetail(iid).then((res) => {
@@ -155,7 +174,7 @@ import {itemImageListennerMixin} from 'common/mixin';
       background-color: #fff;
     }
     .detail-scroll {
-      height: calc(100% - 44px);
+      height: calc(100% - 44px - 49px);
     }
     .else {
       display: flex;

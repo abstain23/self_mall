@@ -39,7 +39,7 @@ export default {
       this.currentIndex = index
       if(this.offsetTops.length){
         // console.log(this.$parent.$refs.scroll.scrollTo)
-        this.$parent.$refs.scroll.scrollTo(0,-this.offsetTops[index])
+        this.$parent.$refs.scroll.scrollTo(0,-this.offsetTops[index], 0)
         // scrollTo(0,this.offsetTops[index])
       }
     },

@@ -31,7 +31,7 @@ import Scroll from 'components/common/scroll/scroll'
 import BackTop from 'components/content/backTop/BackTop'
 
 
-import {itemImageListennerMixin} from 'common/mixin';
+import {itemImageListennerMixin, backTopMixin} from 'common/mixin';
 
 export default {
   name: 'home',
@@ -45,7 +45,7 @@ export default {
        Scroll,
        BackTop
     },
-    mixins:[itemImageListennerMixin],
+    mixins:[itemImageListennerMixin, backTopMixin],
   data () {
     return {
       banner:[],
@@ -57,7 +57,6 @@ export default {
         sell:{page:0,list:[],positionY:0}
       },
       currentType:'pop',
-      showBackTop:false,
       tabOffsetTop:0,
       isTabFixed:false,
       saveY:0
@@ -106,10 +105,6 @@ export default {
         // console.log(this.goods[type].list)
       this.goods[type].page+=1
       })
-    },
-    backTop(){
-      // console.log(this.$refs.scroll.scroll)
-      this.$refs.scroll.scrollTo(0,0)
     },
     homeScroll(position){
       this.showBackTop=(-position.y)>1000
